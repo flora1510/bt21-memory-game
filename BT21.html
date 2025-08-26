@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BT21 Memory Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+    }
+    h1 {
+      margin: 10px;
+      color: #333;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 15px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .card {
+      width: 100px;
+      height: 100px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+    }
+    .card-front {
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #555;
+      border: 2px solid #ccc;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #666;
+    }
+    #score, #timer {
+      font-size: 20px;
+      margin: 10px;
+      color: #222;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 BT21 Memory Game 🎮</h1>
+  <div id="score">Score: 0</div>
+  <div id="timer">Time: 60s</div>
+  <div id="game-board"></div>
+  <button onclick="resetGame()">🔄 Reset</button>
+
+  <audio id="applause" src="https://www.soundjay.com/human/applause-1.mp3"></audio>
+
+  <script>
+    const images = [
+      "chimmy.jpeg",
+      "cooky.jpeg",
+      "mang.jpeg",
+      "OIP.jpeg",
+      "suga.jpeg",
+      "tata.jpeg",
+      "wwh.jpeg"
+    ];
+
+    let cards = [];
+    let flippedCards = [];
+    let score = 0;
+    let matchedPairs = 0;
+    let timer;
+    let timeLeft = 60;
+
+    const board = document.getElementById("game-board");
+    const scoreDisplay = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+    const applause = document.getElementById("applause");
+
+    function startGame() {
+      board.innerHTML = "";
+      cards = [...images, ...images]
+        .sort(() => 0.5 - Math.random())
+        .map((img, index) => createCard(img, index));
+
+      cards.forEach(card => board.appendChild(card));
+      score = 0;
+      matchedPairs = 0;
+      scoreDisplay.textContent = "Score: " + score;
+
+      // Reset and start timer
+      clearInterval(timer);
+      timeLeft = 60;
+      timerDisplay.textContent = "Time: " + timeLeft + "s";
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    function createCard(img, index) {
+      const card = document.createElement("div");
+      card.classList.add("card");
+      card.dataset.image = img;
+
+      const inner = document.createElement("div");
+      inner.classList.add("card-inner");
+
+      const front = document.createElement("div");
+      front.classList.add("card-front");
+      front.textContent = "❓";
+
+      const back = document.createElement("div");
+      back.classList.add("card-back");
+      back.style.backgroundImage = `url(${img})`;
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+
+      card.addEventListener("click", () => flipCard(card));
+      return card;
+    }
+
+    function flipCard(card) {
+      if (flippedCards.length < 2 && !card.classList.contains("flipped")) {
+        card.classList.add("flipped");
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+          setTimeout(checkMatch, 800);
+        }
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards;
+      if (card1.dataset.image === card2.dataset.image) {
+        score += 10;
+        matchedPairs++;
+        if (matchedPairs === images.length) {
+          clearInterval(timer);
+          applause.play();
+          alert("🎉 You matched all cards! 🎉");
+        }
+      } else {
+        card1.classList.remove("flipped");
+        card2.classList.remove("flipped");
+        score -= 2;
+      }
+      flippedCards = [];
+      scoreDisplay.textContent = "Score: " + score;
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerDisplay.textContent = "Time: " + timeLeft + "s";
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        alert("⏰ Time's up! Game Over!");
+      }
+    }
+
+    function resetGame() {
+      clearInterval(timer);
+      startGame();
+    }
+
+    // Start game on page load
+    startGame();
+  </script>
+</body>
+</html>
